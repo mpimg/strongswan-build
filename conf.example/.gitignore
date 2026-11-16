@@ -1,0 +1,3 @@
+# Secrets stay out of git, but build.sh links them into the deployment.
+/etc/strongswan.d/charon/eap-radius-secret.conf
+/etc/swanctl/private/
