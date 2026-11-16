@@ -1,0 +1,31 @@
+#!/usr/bin/env beesh
+
+BEE_BUILDTYPE=autotools
+
+# Not on beehive.molgen.mpg.de yet. Checked on 2026-11-16 against
+# strongswan-6.1.0.tar.bz2.md5 and the release key 948F158A4E76A27B
+# F3D07532DF42C170B34DBA77 (strongswan-6.1.0.tar.bz2.sig):
+# MD5     c789d4f7389057b6c99860bf1e52ed1e
+# SHA-256 fe6c97481298767213cfc2e9a1da29fdd8018d481ff4cb9cf0283099654f20d4
+SRCURL[0]="https://download.strongswan.org/strongswan-${PKGVERSION}.tar.bz2"
+
+# Since 6.0, the defaults already build charon, swanctl and the openssl,
+# kernel-netlink, socket-default, vici, attr and updown plugins, and leave out
+# IKEv1, stroke and gmp. Add only what the gateway needs on top:
+#
+# eap-identity  asks Windows clients for their user name (EAP-Identity)
+# eap-radius    forwards EAP-MSCHAPv2 to the RADIUS server
+#
+# resolve only writes DNS servers received as client into resolv.conf, which
+# a gateway never is.
+#
+# charon keeps its PID file and the vici socket in the piddir, which defaults
+# to /var/run, independent of localstatedir. Keep them in the deployment, so
+# charon runs as the unprivileged project user.
+mee_configure() {
+    bee_configure \
+        --with-piddir="${PREFIX}"/var/run \
+        --enable-eap-identity \
+        --enable-eap-radius \
+        --disable-resolve
+}
