@@ -128,7 +128,7 @@ secret.
 ## Build and activate
 
     ./build.sh /project/vpn-ikev2
-    ./activate.sh /project/vpn-ikev2 2026-11-16     # as root
+    ./activate.sh /project/vpn-ikev2 2026-11-16     # as root, for startstop.sh start
 
 `build.sh` options: `-n NAME` (default: today’s date), `-c CONF_DIR`
 (default: `PROJECT_DIR/conf`), `-l LOG_DIR` (default: `PROJECT_DIR/logs`).
@@ -142,15 +142,21 @@ ends all connections, so clients reconnect.
 
 ## Operation
 
-    /project/vpn-ikev2/startstop.sh start      # as root
+    /project/vpn-ikev2/startstop.sh start      # as root, to set up the namespaces
     /project/vpn-ikev2/startstop.sh stop
     /project/vpn-ikev2/startstop.sh reload     # load changed swanctl.conf
     /project/vpn-ikev2/startstop.sh status     # connected clients
     /project/vpn-ikev2/startstop.sh exec swanctl --list-pools --leases
     /project/vpn-ikev2/startstop.sh exec       # shell in the namespaces
 
-Except for `start`, the owner of the project directory can run these without
-root, as the owner of a user namespace may enter it.
+`start` needs root for what happens outside charon’s namespaces: loading the
+kernel modules `xfrm_user` and `esp4`, creating the VLAN interface on
+`net03`, moving it into the new network namespace, and creating the user
+namespace as the owner of the deployment (`sudo -u`), in which charon then
+runs without root. `activate.sh` runs `start`, so it needs root as well.
+
+The owner of the project directory can run the other commands without root,
+as the owner of a user namespace may enter it with `nsenter`.
 
 The algorithm proposals are strongSwan’s defaults. Windows proposes only weak
 ones by default, so set stronger ones on Windows with
