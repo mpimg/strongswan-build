@@ -91,9 +91,14 @@ case "${1-}" in
     # relative to PREFIX. Messages before that go to logs/charon.out. Write
     # to the deployment as its owner, as root may not on NFS (root_squash).
     cd "$PREFIX"
+    # After a crash or reboot, the PID file and the vici socket are left
+    # behind. No charon runs (checked above), so remove them before starting,
+    # as otherwise the wait below sees the old socket and swanctl may run
+    # before charon listens, and charon refuses to start, if the old PID now
+    # belongs to another process of the owner.
+    ns sh -c 'mkdir -p var/run && rm -f var/run/charon.pid var/run/charon.vici'
     # shellcheck disable=SC2016
-    ns sh -c 'mkdir -p var/run && exec setsid "$0" </dev/null >>logs/charon.out 2>&1' \
-        "$CHARON" &
+    ns sh -c 'exec setsid "$0" </dev/null >>logs/charon.out 2>&1' "$CHARON" &
 
     for _ in $(seq 30); do
         [ -S "$VICI_SOCKET" ] && break
