@@ -35,6 +35,33 @@ charon_pid() {
     pgrep -u "$SWAN_USER" -x charon --oldest || true
 }
 
+# The PIDs of the processes in the network namespace $1, as given by
+# readlink /proc/PID/ns/net. Without root, only the processes of the caller
+# are readable, but the ones in charon's namespaces all belong to its owner.
+netns_pids() {
+    local p
+    for p in /proc/[0-9]*; do
+        if [ "$(readlink "$p"/ns/net 2>/dev/null)" = "$1" ]; then
+            echo "${p#/proc/}"
+        fi
+    done
+}
+
+# Wait up to $1 seconds for the processes $2... to exit.
+wait_for_exit() {
+    local timeout=$1 p alive
+    shift
+    for _ in $(seq "$timeout"); do
+        alive=
+        for p; do
+            kill -0 "$p" 2>/dev/null && alive=1
+        done
+        [ -n "$alive" ] || return 0
+        sleep 1
+    done
+    return 1
+}
+
 # Run a command in the namespaces of the running charon, as root or as the
 # owner of the user namespace. unshare --map-root-user denies setgroups() in
 # the user namespace, which nsenter only accepts, if setgroups() succeeds
@@ -110,13 +137,29 @@ case "${1-}" in
   stop)
     pid=$(charon_pid)
     [ -n "$pid" ] || exit 0
+    netns=$(readlink /proc/"$pid"/ns/net)
+    # This script would keep the namespaces alive itself.
+    [ "$(readlink /proc/self/ns/net)" != "$netns" ] \
+        || die "run stop outside of charon's namespaces"
+
     # charon deletes the SAs and sends clients a delete notification.
     kill -TERM "$pid"
-    for _ in $(seq 30); do
-        kill -0 "$pid" 2>/dev/null || exit 0
-        sleep 1
-    done
-    die "charon (PID $pid) still running after 30 s"
+    if ! wait_for_exit 30 "$pid"; then
+        echo "$0: charon (PID $pid) still running after 30 s, killing it" >&2
+        kill -KILL "$pid" 2>/dev/null || true
+    fi
+
+    # Any process left in charon's namespaces, like a shell of `exec`, keeps
+    # them alive, and with them the VLAN interface, which start then fails to
+    # create again. Kill only these, not all processes of the owner, which
+    # also builds the deployments.
+    mapfile -t pids < <(netns_pids "$netns")
+    if [ ${#pids[@]} -gt 0 ]; then
+        echo "$0: killing processes left in charon's namespaces: ${pids[*]}" >&2
+        kill -KILL "${pids[@]}" 2>/dev/null || true
+    fi
+    wait_for_exit 10 "$pid" "${pids[@]}" \
+        || die "processes in charon's namespaces still running after SIGKILL"
     ;;
   reload)
     # Load the changed swanctl configuration without stopping charon.
