@@ -2,12 +2,11 @@
 
 BEE_BUILDTYPE=autotools
 
-# Not on beehive.molgen.mpg.de yet. Checked on 2026-11-16 against
-# strongswan-6.1.0.tar.bz2.md5 and the release key 948F158A4E76A27B
-# F3D07532DF42C170B34DBA77 (strongswan-6.1.0.tar.bz2.sig):
-# MD5     c789d4f7389057b6c99860bf1e52ed1e
+# From https://download.strongswan.org/strongswan-6.1.0.tar.bz2, checked on
+# 2026-11-16 against strongswan-6.1.0.tar.bz2.md5 and the release key
+# 948F158A4E76A27BF3D07532DF42C170B34DBA77 (strongswan-6.1.0.tar.bz2.sig):
 # SHA-256 fe6c97481298767213cfc2e9a1da29fdd8018d481ff4cb9cf0283099654f20d4
-SRCURL[0]="https://download.strongswan.org/strongswan-${PKGVERSION}.tar.bz2"
+SRCURL[0]="https://beehive.molgen.mpg.de/c789d4f7389057b6c99860bf1e52ed1e/strongswan-6.1.0.tar.bz2"
 
 # Since 6.0, the defaults already build charon, swanctl and the openssl,
 # kernel-netlink, socket-default, vici, attr and updown plugins, and leave out
