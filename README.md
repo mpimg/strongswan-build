@@ -11,7 +11,7 @@ The layout and the scripts follow `roundcube-build-scripts`.
 
 ## Layout
 
-    /project/strongswan/
+    /project/vpn-ikev2/
     ├── conf/                 configuration, a git repository of its own
     ├── logs/                 logs, shared by all deployments
     ├── 2026-11-16/           a deployment, built by build.sh
@@ -19,7 +19,7 @@ The layout and the scripts follow `roundcube-build-scripts`.
     │   ├── etc/              -> files in conf/etc, packaged ones as *.dist
     │   ├── libexec/ipsec/charon
     │   ├── sbin/swanctl
-    │   ├── logs              -> /project/strongswan/logs
+    │   ├── logs              -> /project/vpn-ikev2/logs
     │   ├── var/run/          charon.pid, charon.vici
     │   ├── startstop.sh
     │   └── profile
@@ -61,8 +61,8 @@ Changes on the router (`MXR.cf.pl` in mxrouter-etc), a sketch:
 
 Start from the example:
 
-    cp -r conf.example /project/strongswan/conf
-    cd /project/strongswan/conf
+    cp -r conf.example /project/vpn-ikev2/conf
+    cd /project/vpn-ikev2/conf
     git init
     git add .
     git commit -m 'Add configuration from strongswan-build'
@@ -111,8 +111,8 @@ secret.
 
 ## Build and activate
 
-    ./build.sh /project/strongswan
-    ./activate.sh /project/strongswan 2026-11-16     # as root
+    ./build.sh /project/vpn-ikev2
+    ./activate.sh /project/vpn-ikev2 2026-11-16     # as root
 
 `build.sh` options: `-n NAME` (default: today’s date), `-c CONF_DIR`
 (default: `PROJECT_DIR/conf`), `-l LOG_DIR` (default: `PROJECT_DIR/logs`).
@@ -126,12 +126,12 @@ ends all connections, so clients reconnect.
 
 ## Operation
 
-    /project/strongswan/startstop.sh start      # as root
-    /project/strongswan/startstop.sh stop
-    /project/strongswan/startstop.sh reload     # load changed swanctl.conf
-    /project/strongswan/startstop.sh status     # connected clients
-    /project/strongswan/startstop.sh exec swanctl --list-pools --leases
-    /project/strongswan/startstop.sh exec       # shell in the namespaces
+    /project/vpn-ikev2/startstop.sh start      # as root
+    /project/vpn-ikev2/startstop.sh stop
+    /project/vpn-ikev2/startstop.sh reload     # load changed swanctl.conf
+    /project/vpn-ikev2/startstop.sh status     # connected clients
+    /project/vpn-ikev2/startstop.sh exec swanctl --list-pools --leases
+    /project/vpn-ikev2/startstop.sh exec       # shell in the namespaces
 
 Except for `start`, the owner of the project directory can run these without
 root, as the owner of a user namespace may enter it.
