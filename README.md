@@ -100,8 +100,24 @@ strongSwan merges the sections of both eap-radius files.
 The gateway needs a certificate from a publicly trusted CA for the host name
 users enter (`local.id` in `swanctl.conf`), so no client needs a CA installed.
 The host name has to be a subjectAltName (dNSName) of the certificate, and
-Windows requires the extended key usage serverAuth. Put the certificate and the
-intermediate CA certificates into `etc/swanctl/x509/`.
+Windows requires the extended key usage serverAuth. Let’s Encrypt certificates
+meet both.
+
+Clients trust only root CAs, so the gateway has to send the intermediate CA
+certificate too. strongSwan does that for intermediates in `x509ca/`. With the
+files of certbot:
+
+| certbot          | configuration                      |
+| ---------------- | ---------------------------------- |
+| `cert.pem`       | `etc/swanctl/x509/gateway.pem`     |
+| `chain.pem`      | `etc/swanctl/x509ca/chain.pem`     |
+| `privkey.pem`    | `etc/swanctl/private/gateway.pem`  |
+
+swanctl loads one certificate per file, so do not use `fullchain.pem`, and
+split `chain.pem`, if it ever holds several certificates.
+
+After a renewal, `startstop.sh reload` loads the new certificate. Established
+connections stay up, as the certificate is only used for authentication.
 
 ### RADIUS
 
